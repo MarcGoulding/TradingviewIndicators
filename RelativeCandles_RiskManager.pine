@@ -1,0 +1,168 @@
+// © MufasaOG
+// @version=5
+indicator("RC + RM", "", true, max_labels_count=500)
+
+
+o = (high>high[1]) ? (low>low[1] ? low : (open>close ? high:low)) : (low>low[1] ? (open>close? high:low):high)
+c = (high>high[1]) ? (low>low[1] ? high: (open>close ? low:high)) : (low>low[1] ? (open>close? low:high):low)
+h = high
+l = low
+
+colorBody = (high>high[1]) ? (low>low[1]? color.lime:(open>close? color.red:color.lime)):(low>low[1]? color.gray:color.red)
+plotcandle(o, h, l, c, color=colorBody, title="Relative Candles")
+
+plot(close, "price", show_last=1, trackprice=true, offset=-99999)
+
+shorting = input(false, title="Long/Short")
+risk = input.int(1, title="% Risk")
+
+toggleBalance = input(false, "", inline="01")
+i_balance = input(100, title="Account Balance", inline="01")
+
+toggleCustomSL = input(false, "Custom SL", inline="04")
+customSL = input.float(0.,title="", inline="04")
+smartSL = input(false, title="Smart SL", inline="04") // Toggles smart SL window
+smartSLwindow = 3 // Adds another 2 candles to the SL check window
+
+toggleEntry = input(false, "", inline="05")
+customEntry = input.float(0.,title="Custom Entry", inline="05")
+
+goback = input.int(1, title="Go back N bars")
+tps = input (true, title="Show TPs", inline="02")
+label_shift = input.int(6,title="Text Position",inline="03",options=[1,2,3,4,5,6,7,8,9,10,20,30,40]) // Amount to shift SL-Entry-TP-etc labels to the right
+shortLine = input(true, title="Extend Lines", inline="03")
+
+//Colors
+slcolor = color.red
+entrycolor = color.yellow
+tpcolor=color.green
+
+// TP Formulas
+tplong(entry, balance, risk, vol, rrr) =>
+    entry * ( 1 + balance * risk * rrr / (vol*100) )
+
+tpshort(entry, balance, risk, vol, rrr) =>
+    entry * ( 1 - balance * risk * rrr/ (vol*100) )
+   
+// Variables
+var float balance = na
+var entry = float(na)
+var sl = float(na)
+var float diff = na
+var float univol = 1.
+var float vol = na
+var float volPosition = na
+var float tp1 = na
+var float tp2 = na
+var float tp3 = na
+var float tp4 = na
+var float tp5 = na
+
+
+
+if (toggleBalance)
+    balance := i_balance
+else
+    balance := 100
+
+if (shorting)
+    // SHORT
+    if (smartSL)
+        sl := ta.highest(high, smartSLwindow)[goback] + ta.atr(24)[goback]*0.1
+    else if (toggleCustomSL)
+        sl := customSL
+    else
+        sl := ta.highest(high, 1)[goback]
+    entry := toggleEntry? customEntry : low[goback]
+    diff := sl-entry
+    univol := 1 / ( 100 * (sl/entry-1) )
+    vol := balance * risk * univol / close
+    volPosition := entry + 2*diff
+    if (tps)
+        tp1 := tpshort(entry, balance, risk, vol, 1)
+        tp2:= tpshort(entry, balance, risk, vol, 2)
+        tp3:= tpshort(entry, balance, risk, vol, 3)
+        tp4:= tpshort(entry, balance, risk, vol, 4)
+        tp5:= tpshort(entry, balance, risk, vol, 5)
+        
+else
+    // LONG
+    if (smartSL)
+        sl := ta.lowest(low,smartSLwindow)[goback] - ta.atr(24)[goback]*0.1
+    else if (toggleCustomSL)
+        sl := customSL
+    else
+        sl := ta.lowest(low,1)[goback]
+    entry := toggleEntry? customEntry : high[goback]
+    univol := 1/ ( 100 * (1-sl/entry) )
+    vol := balance * risk * univol / close
+    volPosition := 2*sl - entry
+    if (tps)
+        tp1 := tplong(entry, balance, risk, vol, 1)
+        tp2:= tplong(entry, balance, risk, vol, 2)
+        tp3:= tplong(entry, balance, risk, vol, 3)
+        tp5:= tplong(entry, balance, risk, vol, 5)
+        tp4:= tplong(entry, balance, risk, vol, 4)
+        
+
+
+// Volume
+label volLabel = label.new(bar_index+label_shift, volPosition, toggleBalance?str.format("Vol = {1} lots ({0}%)", risk, vol):str.format("Vol = risk * balance * {0}", univol), textcolor=color.aqua, style=label.style_none)
+label.delete(volLabel[1])
+
+
+// SL
+plot(shortLine? sl : na, "SL", show_last=1, trackprice=true, offset=-99999, color=slcolor)
+var line slLine = na
+slLine := line.new(bar_index[1]-goback+1, sl, bar_index, sl, color=color.red, style=line.style_solid, width=1, extend=extend.right)
+label slLabel = label.new(bar_index+label_shift, sl, str.format("SL = {0}",sl), textcolor=color.red, style=label.style_none)
+line.delete(slLine[1])
+label.delete(slLabel[1])
+// ENTRY
+plot(shortLine? entry : na, "Entry", show_last=1, trackprice=true, offset=-99999, color=entrycolor)
+var line entryLine = na
+entryLine := line.new(bar_index[1]-goback+1, entry, bar_index, entry, color=entrycolor, style=line.style_solid, width=1, extend=extend.right)
+label entryLabel = label.new(bar_index+label_shift, entry, str.format("Entry = {0}",entry), textcolor=entrycolor, style=label.style_none)
+line.delete(entryLine[1])
+label.delete(entryLabel[1])
+
+// TP 1
+plot(shortLine and tps? tp1 : na, "TP 1:1", show_last=1, trackprice=true, offset=-99999, color=tpcolor)
+var line tpLine = na
+tpLine := line.new(bar_index[1]-goback+1, tp1, bar_index, tp1, color=color.green, style=line.style_solid, width=1, extend=extend.right)
+label tpLabel = label.new(bar_index+label_shift, tp1, tps?str.format("1:1 = {0}",tp1):"", textcolor=color.green, style=label.style_none)
+line.delete(tpLine[1])
+label.delete(tpLabel[1])
+// TP 2
+plot(shortLine and tps? tp2 : na, "TP 2:1", show_last=1, trackprice=true, offset=-99999, color=tpcolor)
+var line tpLine2 = na
+tpLine2 := line.new(bar_index[1]-goback+1, tp2, bar_index, tp2, color=color.green, style=line.style_solid, width=1, extend=extend.right)
+label tpLabel2 = label.new(bar_index+label_shift, tp2, tps?str.format("2:1 = {0}",tp2):"", textcolor=color.green, style=label.style_none)
+line.delete(tpLine2[1])
+label.delete(tpLabel2[1])
+// TP 3
+plot(shortLine? tp3 : na, "TP 3:1", show_last=1, trackprice=true, offset=-99999, color=tpcolor)
+var line tpLine3 = na
+tpLine3 := line.new(bar_index[1]-goback+1, tp3, bar_index, tp3, color=color.green, style=line.style_solid, width=1, extend=extend.right)
+label tpLabel3 = label.new(bar_index+label_shift, tp3, tps?str.format("3:1 = {0}",tp3):"", textcolor=color.green, style=label.style_none)
+line.delete(tpLine3[1])
+label.delete(tpLabel3[1])
+// TP 4
+plot(shortLine? tp4 : na, "TP 4:1", show_last=1, trackprice=true, offset=-99999, color=tpcolor)
+var line tpLine4 = na
+tpLine4 := line.new(bar_index[1]-goback+1, tp4, bar_index, tp4, color=color.green, style=line.style_solid, width=1, extend=extend.right)
+label tpLabel4 = label.new(bar_index+label_shift, tp4, tps?str.format("4:1 - {0}",tp4):"", textcolor=color.green, style=label.style_none)
+line.delete(tpLine4[1])
+label.delete(tpLabel4[1])
+// TP 5
+plot(shortLine? tp5 : na, "TP 5:1", show_last=1, trackprice=true, offset=-99999, color=tpcolor)
+var line tpLine5 = na
+tpLine5 := line.new(bar_index[1]-goback+1, tp5, bar_index, tp5, color=color.green, style=line.style_solid, width=1, extend=extend.right)
+label tpLabel5 = label.new(bar_index+label_shift, tp5, tps?str.format("5:1 = {0}",tp5):"", textcolor=color.green, style=label.style_none)
+line.delete(tpLine5[1])
+label.delete(tpLabel5[1])
+
+
+// Better SL
+cycle = 0
+cycle := high>high[1]? low>low[1]? cycle[1]==1?1:cycle[1]==0?1:0 : open>close? cycle[1]==1?0:cycle[1]==0?-1:-1 : cycle[1]==1?1:cycle[1]==0?1:0 : low>low[1]? cycle[1]==1?1:cycle[1]==0?0:-1 : cycle[1]==1?0:cycle[1]==0?-1:-1
