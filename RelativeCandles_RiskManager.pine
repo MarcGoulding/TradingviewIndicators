@@ -11,7 +11,7 @@ l = low
 colorBody = (high>high[1]) ? (low>low[1]? color.lime:(open>close? color.red:color.lime)):(low>low[1]? color.gray:color.red)
 plotcandle(o, h, l, c, color=colorBody, title="Relative Candles")
 
-plot(close, "price", show_last=1, trackprice=true, offset=-99999)
+plot(close, "price", show_last=1, trackprice=true, offset=-99999, display=display.none)
 
 shorting = input(false, title="Long/Short")
 risk = input.int(1, title="% Risk")
@@ -112,14 +112,14 @@ label.delete(volLabel[1])
 
 
 // SL
-plot(shortLine? sl : na, "SL", show_last=1, trackprice=true, offset=-99999, color=slcolor)
+plot(shortLine? sl : na, "SL", show_last=1, trackprice=true, offset=-99999, color=slcolor, display=display.none)
 var line slLine = na
 slLine := line.new(bar_index[1]-goback+1, sl, bar_index, sl, color=color.red, style=line.style_solid, width=1, extend=extend.right)
 label slLabel = label.new(bar_index+label_shift, sl, str.format("SL = {0}",sl), textcolor=color.red, style=label.style_none)
 line.delete(slLine[1])
 label.delete(slLabel[1])
 // ENTRY
-plot(shortLine? entry : na, "Entry", show_last=1, trackprice=true, offset=-99999, color=entrycolor)
+plot(shortLine? entry : na, "Entry", show_last=1, trackprice=true, offset=-99999, color=entrycolor, display=display.none)
 var line entryLine = na
 entryLine := line.new(bar_index[1]-goback+1, entry, bar_index, entry, color=entrycolor, style=line.style_solid, width=1, extend=extend.right)
 label entryLabel = label.new(bar_index+label_shift, entry, str.format("Entry = {0}",entry), textcolor=entrycolor, style=label.style_none)
@@ -127,35 +127,35 @@ line.delete(entryLine[1])
 label.delete(entryLabel[1])
 
 // TP 1
-plot(shortLine and tps? tp1 : na, "TP 1:1", show_last=1, trackprice=true, offset=-99999, color=tpcolor)
+plot(shortLine and tps? tp1 : na, "TP 1:1", show_last=1, trackprice=true, offset=-99999, color=tpcolor, display=display.none)
 var line tpLine = na
 tpLine := line.new(bar_index[1]-goback+1, tp1, bar_index, tp1, color=color.green, style=line.style_solid, width=1, extend=extend.right)
 label tpLabel = label.new(bar_index+label_shift, tp1, tps?str.format("1:1 = {0}",tp1):"", textcolor=color.green, style=label.style_none)
 line.delete(tpLine[1])
 label.delete(tpLabel[1])
 // TP 2
-plot(shortLine and tps? tp2 : na, "TP 2:1", show_last=1, trackprice=true, offset=-99999, color=tpcolor)
+plot(shortLine and tps? tp2 : na, "TP 2:1", show_last=1, trackprice=true, offset=-99999, color=tpcolor), display=display.none
 var line tpLine2 = na
 tpLine2 := line.new(bar_index[1]-goback+1, tp2, bar_index, tp2, color=color.green, style=line.style_solid, width=1, extend=extend.right)
 label tpLabel2 = label.new(bar_index+label_shift, tp2, tps?str.format("2:1 = {0}",tp2):"", textcolor=color.green, style=label.style_none)
 line.delete(tpLine2[1])
 label.delete(tpLabel2[1])
 // TP 3
-plot(shortLine? tp3 : na, "TP 3:1", show_last=1, trackprice=true, offset=-99999, color=tpcolor)
+plot(shortLine? tp3 : na, "TP 3:1", show_last=1, trackprice=true, offset=-99999, color=tpcolor, display=display.none)
 var line tpLine3 = na
 tpLine3 := line.new(bar_index[1]-goback+1, tp3, bar_index, tp3, color=color.green, style=line.style_solid, width=1, extend=extend.right)
 label tpLabel3 = label.new(bar_index+label_shift, tp3, tps?str.format("3:1 = {0}",tp3):"", textcolor=color.green, style=label.style_none)
 line.delete(tpLine3[1])
 label.delete(tpLabel3[1])
 // TP 4
-plot(shortLine? tp4 : na, "TP 4:1", show_last=1, trackprice=true, offset=-99999, color=tpcolor)
+plot(shortLine? tp4 : na, "TP 4:1", show_last=1, trackprice=true, offset=-99999, color=tpcolor, display=display.none)
 var line tpLine4 = na
 tpLine4 := line.new(bar_index[1]-goback+1, tp4, bar_index, tp4, color=color.green, style=line.style_solid, width=1, extend=extend.right)
 label tpLabel4 = label.new(bar_index+label_shift, tp4, tps?str.format("4:1 - {0}",tp4):"", textcolor=color.green, style=label.style_none)
 line.delete(tpLine4[1])
 label.delete(tpLabel4[1])
 // TP 5
-plot(shortLine? tp5 : na, "TP 5:1", show_last=1, trackprice=true, offset=-99999, color=tpcolor)
+plot(shortLine? tp5 : na, "TP 5:1", show_last=1, trackprice=true, offset=-99999, color=tpcolor, display=display.none)
 var line tpLine5 = na
 tpLine5 := line.new(bar_index[1]-goback+1, tp5, bar_index, tp5, color=color.green, style=line.style_solid, width=1, extend=extend.right)
 label tpLabel5 = label.new(bar_index+label_shift, tp5, tps?str.format("5:1 = {0}",tp5):"", textcolor=color.green, style=label.style_none)
